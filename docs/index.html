@@ -12,6 +12,15 @@
       border: 1px solid #ccc; padding: 10px; border-radius: 6px;
       box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
     }
+    .item-name {
+      color: navy;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    .selling-price {
+      color: #e06666; /* soft red */
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -57,10 +66,10 @@
         matches.forEach(item => {
           const li = document.createElement('li');
           li.classList.add('item-card');
-          li.innerHTML = `<strong>${item.name}</strong><br>
+          li.innerHTML = `<div class="item-name">${item.name}</div>
                           Barcode: ${item.barcode}<br>
                           Purchase Price: ₱${item.purchasePrice}<br>
-                          Selling Price: ₱${item.sellingPrice}`;
+                          <span class="selling-price">Selling Price: ₱${item.sellingPrice}</span>`;
           resultList.appendChild(li);
         });
       }
