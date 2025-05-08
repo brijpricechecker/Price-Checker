@@ -2,49 +2,69 @@
 <html>
 <head>
   <title>Price Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input { margin-bottom: 10px; padding: 5px; width: 300px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    body { font-family: Arial; margin: 20px; }
+    input, button { font-size: 1.1em; padding: 8px; }
+    ul { list-style: none; padding: 0; }
+    li { margin-bottom: 12px; }
+    .item-card {
+      border: 1px solid #ccc; padding: 10px; border-radius: 6px;
+      box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
-  <h1>Price Checker</h1>
-  <input type="file" id="fileInput" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
-  <br>
-  <input type="text" id="searchInput" placeholder="Enter barcode or item name">
-  <div id="result"></div>
+  <h2>Price Checker</h2>
+  <input type="text" id="searchInput" placeholder="Enter barcode or item name" oninput="searchItem()" style="width: 100%;">
+  <ul id="result"></ul>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script>
-    let data = [];
+    let priceData = [];
 
-    document.getElementById('fileInput').addEventListener('change', function (e) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const workbook = XLSX.read(e.target.result, { type: 'binary' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        data = XLSX.utils.sheet_to_json(sheet);
-      };
-      reader.readAsBinaryString(e.target.files[0]);
-    });
+    fetch('price_list.csv')
+      .then(response => response.text())
+      .then(csv => {
+        const rows = csv.trim().split('\n').map(row => row.split(','));
+        const headers = rows[0].map(h => h.trim().toLowerCase());
 
-    document.getElementById('searchInput').addEventListener('input', function () {
-      const query = this.value.toLowerCase();
-      const result = data.find(item =>
-        (item["Barcode"] + '').toLowerCase().includes(query) ||
-        (item["Item Name"] + '').toLowerCase().includes(query)
+        const barcodeIndex = headers.findIndex(h => h.includes('barcode'));
+        const nameIndex = headers.findIndex(h => h.includes('item'));
+        const sellingPriceIndex = headers.findIndex(h => h.includes('selling'));
+        const purchasePriceIndex = headers.findIndex(h => h.includes('purchase'));
+
+        priceData = rows.slice(1).map(row => ({
+          barcode: row[barcodeIndex]?.trim(),
+          name: row[nameIndex]?.trim(),
+          sellingPrice: row[sellingPriceIndex]?.trim(),
+          purchasePrice: row[purchasePriceIndex]?.trim()
+        }));
+      });
+
+    function searchItem() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const resultList = document.getElementById('result');
+      resultList.innerHTML = '';
+
+      const matches = priceData.filter(item =>
+        item.barcode?.toLowerCase().includes(input) ||
+        item.name?.toLowerCase().includes(input)
       );
 
-      const output = document.getElementById('result');
-      if (result) {
-        output.innerHTML = `<p><strong>Item:</strong> ${result["Item Name"]}<br>
-                            <strong>Selling Price:</strong> ${result["Selling Price"]}</p>`;
+      if (matches.length === 0) {
+        resultList.innerHTML = '<li>No results found.</li>';
       } else {
-        output.innerHTML = "<p>No match found</p>";
+        matches.forEach(item => {
+          const li = document.createElement('li');
+          li.classList.add('item-card');
+          li.innerHTML = `<strong>${item.name}</strong><br>
+                          Barcode: ${item.barcode}<br>
+                          Purchase Price: ₱${item.purchasePrice}<br>
+                          Selling Price: ₱${item.sellingPrice}`;
+          resultList.appendChild(li);
+        });
       }
-    });
+    }
   </script>
 </body>
 </html>
