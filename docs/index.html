@@ -29,51 +29,44 @@
   <ul id="result"></ul>
 
   <script>
-    let priceData = [];
+  let priceData = [];
 
-    fetch('price_list.csv')
-      .then(response => response.text())
-      .then(csv => {
-        const rows = csv.trim().split('\n').map(row => row.split(','));
-        const headers = rows[0].map(h => h.trim().toLowerCase());
+  // Replace with your deployed web app URL
+  const apiUrl = 'https://script.google.com/macros/s/AKfycbzLIXvYwfrprHVHeX-_Sfgd8M64aXW1phSRuqz35UUu2ABT4vUuzr1NpLvNR0pHew/exec';
 
-        const barcodeIndex = headers.findIndex(h => h.includes('barcode'));
-        const nameIndex = headers.findIndex(h => h.includes('item'));
-        const sellingPriceIndex = headers.findIndex(h => h.includes('selling'));
-        const purchasePriceIndex = headers.findIndex(h => h.includes('purchase'));
+  fetch(apiUrl)
+    .then(res => res.json())
+    .then(data => {
+      priceData = data;
+    })
+    .catch(err => {
+      console.error('Failed to load data:', err);
+    });
 
-        priceData = rows.slice(1).map(row => ({
-          barcode: row[barcodeIndex]?.trim(),
-          name: row[nameIndex]?.trim(),
-          sellingPrice: row[sellingPriceIndex]?.trim(),
-          purchasePrice: row[purchasePriceIndex]?.trim()
-        }));
+  function searchItem() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const resultList = document.getElementById('result');
+    resultList.innerHTML = '';
+
+    const matches = priceData.filter(item =>
+      item.barcode.toLowerCase().includes(input) ||
+      item.name.toLowerCase().includes(input)
+    );
+
+    if (matches.length === 0) {
+      resultList.innerHTML = '<li>No results found.</li>';
+    } else {
+      matches.forEach(item => {
+        const li = document.createElement('li');
+        li.classList.add('item-card');
+        li.innerHTML = `<div class="item-name">${item.name}</div>
+                        Barcode: ${item.barcode}<br>
+                        Purchase Price: ₱${item.purchasePrice}<br>
+                        <span class="selling-price">Selling Price: ₱${item.sellingPrice}</span>`;
+        resultList.appendChild(li);
       });
-
-    function searchItem() {
-      const input = document.getElementById('searchInput').value.toLowerCase();
-      const resultList = document.getElementById('result');
-      resultList.innerHTML = '';
-
-      const matches = priceData.filter(item =>
-        item.barcode?.toLowerCase().includes(input) ||
-        item.name?.toLowerCase().includes(input)
-      );
-
-      if (matches.length === 0) {
-        resultList.innerHTML = '<li>No results found.</li>';
-      } else {
-        matches.forEach(item => {
-          const li = document.createElement('li');
-          li.classList.add('item-card');
-          li.innerHTML = `<div class="item-name">${item.name}</div>
-                          Barcode: ${item.barcode}<br>
-                          Purchase Price: ₱${item.purchasePrice}<br>
-                          <span class="selling-price">Selling Price: ₱${item.sellingPrice}</span>`;
-          resultList.appendChild(li);
-        });
-      }
     }
-  </script>
+  }
+</script>
 </body>
 </html>
